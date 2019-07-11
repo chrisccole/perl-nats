@@ -96,7 +96,7 @@ sub nb_getline {
     # EOL was not found, so suck in more data if we can
     $self->eobuf = length $self->buffer;
     # append to our buffer from the file handle if any data is there.
-    my $count = sysread($self->_socket,$self->buffer,1024,$self->eobuf);
+    my $count = sysread($self->_socket,$self->buffer,($length - $self->eobuf),$self->eobuf);
 
     if (!defined $count) {
       return '0E0' if $! == EWOULDBLOCK; # we handle this error

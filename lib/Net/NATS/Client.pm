@@ -11,6 +11,7 @@ use Class::XSAccessor {
         'socket_args',
         'subscriptions',
         'uri',
+        'timeout',
     ],
     lvalue_accessors => [
         'current_sid',
@@ -162,7 +163,7 @@ sub read {
     return unless $rv;          # EOF or error
 
     if ($rv eq '0E0') {
-      while ($rv eq '0E0' && $self->connection->can_read()) { # keep trying until we get the data we need.
+      while ($rv eq '0E0' && $self->connection->can_read($self->timeout)) { # keep trying until we get the data we need.
         $rv = $self->connection->nb_read($data,$length);
         return unless $rv;        # EOF or error. should report error somewhere...
       }
@@ -174,7 +175,9 @@ sub read {
 
 # non-blocking version of read_line. if no timeout passed, will block
 sub read_line {
-    my ($self,$timeout) = @_;
+    my ($self) = shift;
+
+    my $timeout = shift // $self->timeout;
     my $line;
 
     my $rv = $self->connection->nb_getline($line);
@@ -232,7 +235,7 @@ sub parse_msg {
 
 sub wait_for_op {
     my $self = shift;
-    my $timeout = shift;        # in seconds; can be fractional
+    my $timeout = shift // $self->timeout;        # in seconds; can be fractional
 
     my ($op, @args) = $self->read_line($timeout);
     return unless defined $op;
